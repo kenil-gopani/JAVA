@@ -1,4 +1,2 @@
-1
-1
-1
-1
+# JAVA
+Initial commit for GitHub Actions
