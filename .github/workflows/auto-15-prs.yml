@@ -1,0 +1,38 @@
+name: Auto 15 PRs Daily
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs daily at 00:00 UTC
+  workflow_dispatch:      # Allow manual run via UI
+
+jobs:
+  generate_and_merge_prs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "AutoBot"
+          git config --global user.email "autobot@example.com"
+
+      - name: Install GitHub CLI
+        uses: cli/cli-action@v2
+
+      - name: Generate and Merge 15 PRs
+        run: |
+          for i in {1..15}; do
+            BRANCH="auto-pr-$i-$(date +%s)"
+            git checkout -b "$BRANCH"
+            echo "Auto change $i at $(date)" > "file-$i.txt"
+            git add "file-$i.txt"
+            git commit -m "Auto PR $i"
+            git push origin "$BRANCH"
+
+            gh pr create --base main --head "$BRANCH" --title "Auto PR $i" --body "Created automatically"
+            gh pr merge "$BRANCH" --squash --delete-branch --yes
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
