@@ -1,0 +1,77 @@
+name: Daily PR Goal Tracker
+
+on:
+  schedule:
+    # Runs at 5 PM IST (11:30 UTC), Monday-Friday.
+    # Current time is Friday, June 13, 2025 at 4:57:18 PM IST.
+    # For 5 PM IST (UTC+5:30), the UTC time is 11:30.
+    # So, '30 11 * * 1-5' is correct for Mon-Fri at 5 PM IST.
+    - cron: '30 11 * * 1-5'
+
+  workflow_dispatch:
+
+jobs:
+  track_and_notify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Python dependencies
+        run: pip install requests
+
+      - name: Run PR tracking script
+        id: pr_data
+        env:
+          # --- UPDATED LINE BELOW ---
+          GTH_TOK: ${{ secrets.GTH_TOK }} # Now referencing your secret named GTH_TOK
+          # --- END UPDATED LINE ---
+          GH_USERNAME: your-github-username # Replace with your actual GitHub username
+        run: python pr_tracker.py
+
+      - name: Calculate progress
+        run: |
+          PRS_TODAY=${{ steps.pr_data.outputs.prs_today }}
+          PRS_MONTH=${{ steps.pr_data.outputs.prs_month }}
+          MONTHLY_GOAL=48
+          DAILY_GOAL=2
+
+          echo "Daily Merged PRs: $PRS_TODAY"
+          echo "Monthly Merged PRs: $PRS_MONTH"
+
+          MESSAGE=""
+          if (( PRS_TODAY < DAILY_GOAL )); then
+            MESSAGE=":warning: You've merged $PRS_TODAY PRs today. Daily goal is $DAILY_GOAL. Keep pushing!"
+          else
+            MESSAGE=":white_check_mark: Great job! You hit or exceeded your daily goal of $DAILY_GOAL PRs today ($PRS_TODAY PRs merged)."
+          fi
+
+          if (( PRS_MONTH < MONTHLY_GOAL )); then
+            REMAINING=$(( MONTHLY_GOAL - PRS_MONTH ))
+            MESSAGE="$MESSAGE\n:chart_with_downwards_trend: Total this month: $PRS_MONTH / $MONTHLY_GOAL. You need $REMAINING more PRs."
+          else
+            MESSAGE="$MESSAGE\n:tada: Congratulations! You've already hit or exceeded your monthly goal of $MONTHLY_GOAL PRs ($PRS_MONTH PRs merged)."
+          fi
+
+          echo "::set-output name=message::$MESSAGE"
+        id: progress_message
+
+      - name: Create or Update Tracking Issue
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          issue-number: 1 # Remember to replace with your actual dedicated issue number
+          body: |
+            ## PR Tracker Update for ${{ github.actor }} - ${{ format('{0}', github.event.release.published_at || github.event.issue.updated_at || github.event.pull_request.updated_at || github.event.head_commit.timestamp || github.event.repository.pushed_at || github.event.sender.login || github.event.workflow_run.created_at || github.event.deployment_status.updated_at || github.event.created_at || 'now') }}
+            ${{ steps.progress_message.outputs.message }}
+          token: ${{ secrets.GITHUB_TOKEN }}
