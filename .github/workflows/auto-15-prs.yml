@@ -2,8 +2,8 @@ name: Auto 15 PRs Daily
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Daily at midnight UTC
-  workflow_dispatch:
+    - cron: '0 0 * * *'  # Run daily at midnight
+  workflow_dispatch:       # Manual run
 
 jobs:
   generate_and_merge_prs:
@@ -32,14 +32,12 @@ jobs:
         run: |
           for i in {1..15}; do
             BRANCH="auto-pr-$i-$(date +%s)"
-
-            # Always go back to main before creating new branch
             git checkout main
             git pull origin main
-
             git checkout -b "$BRANCH"
+
             echo "Auto change $i at $(date)" > "file-$i.txt"
-            git add .
+            git add "file-$i.txt"
             git commit -m "Auto PR $i"
             git push origin "$BRANCH"
 
