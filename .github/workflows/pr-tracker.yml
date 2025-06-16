@@ -2,10 +2,10 @@ name: Daily PR Goal Tracker
 
 on:
   schedule:
-    # Runs at 5 PM IST (11:30 UTC), Monday-Friday.
+    # Runs at 1 PM IST (11:30 UTC), Monday-Friday.
     # Current time is Friday, June 13, 2025 at 4:57:18 PM IST.
-    # For 5 PM IST (UTC+5:30), the UTC time is 11:30.
-    # So, '30 11 * * 1-5' is correct for Mon-Fri at 5 PM IST.
+    # For 1 PM IST (UTC+5:30), the UTC time is 11:30.
+    # So, '30 7 * * 1-5' is correct for Mon-Fri at 1 PM IST.
   - cron: '30 7 * * 1-5'
 
   workflow_dispatch:
