@@ -64,7 +64,8 @@ jobs:
             MESSAGE="$MESSAGE\n:tada: Congratulations! You've already hit or exceeded your monthly goal of $MONTHLY_GOAL PRs ($PRS_MONTH PRs merged)."
           fi
 
-          echo "::set-output name=message::$MESSAGE"
+          echo "message=$MESSAGE" >> $GITHUB_OUTPUT
+
         id: progress_message
 
       - name: Create or Update Tracking Issue
